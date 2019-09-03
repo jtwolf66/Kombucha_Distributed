@@ -1,0 +1,5 @@
+flask
+flask-table
+Adafruit-DHT
+mysql-connector
+RPi.GPIO
