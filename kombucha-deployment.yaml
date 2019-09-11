@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kombucha-auto
+  labels:
+    app: kombucha-auto
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: kombucha-auto
+    tier: frontend
+  type: LoadBalancer
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: kombucha-auto
+  labels:
+    app: kombucha-auto
+spec:
+  selector:
+    matchLabels:
+      app: kombucha-auto
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kombucha-auto
+        tier: frontend
+    spec:
+      containers:
+      - image: shlimby/datacol:v3
+        name: data-col
+        env:
+        - name: MYSQLCONNECT
+          value: kombucha-mysql
+        ports:
+        - containerPort: 80
+          name: kombucha-auto
+      - name: website
+        image: shlimby/webapp:v3
+        env:
+        - name: MYSQLCONNECT
+          value: kombucha-mysql
+        ports:
+        - containerPort: 81

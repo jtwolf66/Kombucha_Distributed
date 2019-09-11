@@ -1,12 +1,13 @@
 # import things
 from flask import Flask, request
 from flask_table import Table, Col
-import Adafruit_DHT
-import RPi.GPIO as GPIO
 import os
 import glob
+import mysql.connector
 from datetime import date, datetime
+from mysql.connector import errorcode
 
+hostinfo = os.environ['MYSQLCONNECT']
 #######################
 # This code desperately needs refactoring, but is a functional homebrew solution
 #######################
@@ -19,15 +20,15 @@ app = Flask(__name__)
 ##################################################
 
 try:
-	cnx = mysql.connector.connect(user='wolf', password='wolfdb',
-							      host='127.0.0.1',database='Kombucha_data')
+	cnx = mysql.connector.connect(user='root', password='password',
+								  host=hostinfo,database='Kombucha')
 except mysql.connector.Error as err:
 	if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-    	print("Something is wrong with your user name or password")
+		print("Something is wrong with your user name or password")
 	elif err.errno == errorcode.ER_BAD_DB_ERROR:
-    	print("Database does not exist")
+		print("Database does not exist")
 	else:
-    	print(err)
+		print(err)
 else:
 	cnx.close()
 
@@ -40,6 +41,24 @@ cursor = cnx.cursor()
 
 def write_to_db(batch_num,pH,cursor):
 	"""Writes batch, time, temperature, ambient temperature, and humidity to database"""
+
+	#Batch Number
+	batch = 1
+		
+
+	cur_time = datetime.now()
+	heater_state = 1
+	temp = 30.1
+	amb_hum, amb_temp = 25.1,30.2
+
+	cursor.execute('''INSERT INTO Kombucha_Data('Time', 'Batch', 'Heater State', 'Temperature', 'Ambient Temperature', 'Ambient Humidity','pH')
+				  VALUES(?,?,?,?,?,?,NULL)''', (cur_time, batch_num, heater_state, temp, amb_temp, amb_hum))
+	cursor.commit()
+	return
+
+"""
+def write_to_db(batch_num,pH,cursor):
+	'''Writes batch, time, temperature, ambient temperature, and humidity to database'''
 
 	#Batch Number
 	batch = 1
@@ -80,7 +99,7 @@ def write_to_db(batch_num,pH,cursor):
 		return lines
 
 	def read_temp():
-		"""Reads device file and returns temperature in deg. Celcius"""
+		'''Reads device file and returns temperature in deg. Celcius'''
 		lines = read_temp_raw()
 		while lines[0].strip()[-3:] != 'YES':
 			time.sleep(0.2)
@@ -112,10 +131,10 @@ def write_to_db(batch_num,pH,cursor):
 	amb_hum, amb_temp = read_ambient(amb_heat_pin,2)
 
 	cursor.execute('''INSERT INTO Kombucha_Data('Time', 'Batch', 'Heater State', 'Temperature', 'Ambient Temperature', 'Ambient Humidity','pH')
-                  VALUES(?,?,?,?,?,?,NULL)''', (cur_time, batch_num, heater_state, temp, amb_temp, amb_hum))
+				  VALUES(?,?,?,?,?,?,NULL)''', (cur_time, batch_num, heater_state, temp, amb_temp, amb_hum))
 	cursor.commit()
 	return
-
+"""
 def read_from_db(cursor):
 	"""Writes batch, time, temperature, ambient temperature, and humidity to database"""
 	cursor.execute('''SELECT * FROM (
