@@ -46,4 +46,4 @@ spec:
         - name: MYSQLCONNECT
           value: kombucha-mysql
         ports:
-        - containerPort: 81
+        - containerPort: 5000
